@@ -10,7 +10,7 @@ body {
 
 .App-header {
   background-color: #2c2f40;
-  min-height: 100vh;
+  min-height: 50vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -23,7 +23,7 @@ body {
   padding: 40px 20px;
   width: 90%;
   max-width: 600px;
-  margin: 60px auto;
+  margin: 0 auto;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(5px);
 }
@@ -46,9 +46,10 @@ input[type="text"]:focus {
 }
 
 .Button {
-  width: 200px;
+  width: 70%;
   padding: 12px 24px;
   background-color: #61dafb;
+  margin-top: 16px;
   color: #1e1e2f;
   border: none;
   border-radius: 8px;
@@ -57,12 +58,22 @@ input[type="text"]:focus {
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  
 }
 
 .Button:hover {
   background-color: #21a1f1;
   transform: scale(1.05);
 }
+
+.select_Button {
+  margin-bottom: 1rem;
+  width: 30%;
+  padding: 0.5rem;
+}
+
+
+
 
 .spinner-container {
   display: flex;
@@ -99,22 +110,151 @@ input[type="text"]:focus {
    overflow-x: "auto";
 }
 
-.full_details_background{
-  position: "fixed";
+.full_details_background {
+  position: fixed;
   top: 0;
   left: 0;
-  width: "100%";
-  height: "100%";
-  background-color: "rgba(0,0,0,0.5)";
-  display: "flex";
-  align-items: "center";
-  justify-content: "center";
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.full_details{
-  background: "#fff";
-  padding: "2rem";
-  max-height: "90%";
-  overflow-y: "auto";
-  border-radius: "8px";
-  width: "80%";
+
+.full_details {
+  background: #fff;
+  padding: 2rem;
+  max-height: 90%;
+  overflow-y: auto;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 1000px;
+  box-sizing: border-box;
 }
+
+.tool_response {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+
+.centered-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.scan-summary-container {
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+}
+.home-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2rem;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  flex: 1;
+  margin-top: 200px;
+  min-width: 300px;
+  max-width: 600px;
+}
+
+.history-box {
+  flex: 1;
+  margin-top: 220px;
+  min-width: 300px;
+  max-width: 300px;
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+  max-height: 500px;
+  overflow-y: auto;
+}
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 90vw;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+@media (max-width: 600px) {
+   .App-header {
+    padding: 20px 10px;
+    font-size: 14px;
+  }
+
+   input[type="text"] {
+    width: 80%;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+
+   .Button {
+    width: 80%;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .full_details {
+    padding: 1rem;
+    width: 80%;
+  }
+
+  .scan-summary-container {
+    padding: 0 1rem;
+  }
+
+  .centered-buttons {
+    align-items: center;
+  }
+
+  .tool_response {
+    margin-left: 0;
+  }
+  .home-container {
+    flex-direction: row;
+    align-items: center;
+  }
+   .modal-content {
+    padding: 1rem;
+  }
+   .select_Button {
+    width: 65%;
+    padding: 10px;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+    .toggle-history-button {
+    display: block;
+  }
+
+  .history-box {
+    margin-top: 20px;
+    width: 90%;
+  }
+}
+

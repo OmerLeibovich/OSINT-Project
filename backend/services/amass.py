@@ -11,8 +11,7 @@ IPV6_PATTERN = re.compile(r"(([a-fA-F0-9:]+))\s+\(IPAddress\)")
 def _run_amass_sync(domain: str) -> dict:
     result = subprocess.run(
         ["amass", "enum", "-passive", "-d", domain,
-         "-norecursive", "-timeout", "30", "-max-dns-queries", "100"],
-        shell=True,
+         "-norecursive", "-timeout", "30"],
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
     )

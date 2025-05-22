@@ -2,60 +2,109 @@ import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import * as XLSX from 'xlsx';
 
-
 export default function Results() {
   const [searchParams] = useSearchParams()
   const domain = searchParams.get('domain')
   const source = searchParams.get('source') || 'bing'
-  const [updates, setUpdates] = useState([])
+  const [tools, setTools] = useState({
+    theHarvester: { started: new Date(), result: null, ended: null },
+    amass: { started: new Date(), result: null, ended: null }
+  })
   const [combined, setCombined] = useState(null)
-  const [loading, setLoading] = useState(true)
   const [startTime, setStartTime] = useState(null)
   const [endTime, setEndTime] = useState(null)
   const [showModal, setShowModal] = useState(false)
-  const [toolsCompleted, setToolsCompleted] = useState(0)
   const navigate = useNavigate()
+  const [, forceRerender] = useState(0)
 
-    const exportToExcel = () => {
+  useEffect(() => {
+    const interval = setInterval(() => forceRerender(n => n + 1), 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const exportToExcel = () => {
     if (!combined) return;
 
     const rows = [
-        ...(combined.subdomains || []).map(item => ({ type: 'Subdomain', value: item })),
-        ...(combined.ips || []).map(item => ({ type: 'IP', value: item })),
-        ...(combined.emails || []).map(item => ({ type: 'Email', value: item })),
-        ...(combined.social_profiles || []).map(item => ({ type: 'Social Profile', value: item })),
-    ];
+      ...(combined.subdomains || []).map(item => ({ type: 'Subdomain', value: item })),
+      ...(combined.ips || []).map(item => ({ type: 'IP', value: item })),
+      ...(combined.emails || []).map(item => ({ type: 'Email', value: item })),
+      ...(combined.social_profiles || []).map(item => ({ type: 'Social Profile', value: item })),
+    ]
 
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Scan Results");
+    const worksheet = XLSX.utils.json_to_sheet(rows)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Scan Results")
 
-    const filename = `scan_${domain.replace(/\./g, "_")}_${new Date().toISOString().split("T")[0]}.xlsx`;
-    XLSX.writeFile(workbook, filename);
-    };
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/[:.]/g, "-");
+    const filename = `scan_${domain.replace(/\./g, "_")}_${timestamp}_${source}.xlsx`;
+    XLSX.writeFile(workbook, filename)
+  }
 
   useEffect(() => {
-    if (!domain) {
-      navigate('/')
-      return
-    }
+  if (!domain) {
+    navigate('/')
+    return
+  }
 
-    setStartTime(new Date().toLocaleString())
+  const start = new Date()
+  const startStr = start.toLocaleString()
+  setStartTime(startStr)
 
-    const ws = new WebSocket("ws://127.0.0.1:8000/scan/stream")
+  const ws = new WebSocket("ws://127.0.0.1:8000/scan/stream")
 
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ domain, source }))
-    }
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ domain, source }))
+  }
 
-    ws.onmessage = (event) => {
-      const msg = JSON.parse(event.data)
-      setUpdates(prev => [...prev, msg])
-      setCombined(msg.combined)
-      setEndTime(new Date().toLocaleString())
-      setToolsCompleted(msg.tools_completed)
-      setLoading(false)
-    }
+  ws.onmessage = async (event) => {
+    const msg = JSON.parse(event.data)
+    const now = new Date()
+
+    setTools(prev => {
+      const updated = {
+        ...prev,
+        [msg.source]: {
+          ...prev[msg.source],
+          result: msg.result,
+          ended: now
+        }
+      }
+
+      const finished = Object.values(updated).filter(t => t.result).length
+      if (finished === 2) {
+        const endStr = now.toLocaleString()
+        setEndTime(endStr)
+        saveScanResult(domain, source, startStr, endStr, msg.combined)
+      }
+
+      return updated
+    })
+
+    setCombined(msg.combined)
+  }    
+   async function saveScanResult(domain, source, startTime, endTime, combined) {
+        try {
+            await fetch("http://127.0.0.1:8000/save", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                domain,
+                source,
+                start_time: startTime,
+                end_time: endTime,
+                result: combined
+            })
+            })
+        } catch (err) {
+            console.error("Failed to save scan result:", err)
+        }
+        }
+
+
 
     ws.onerror = (err) => {
       console.error("WebSocket error:", err)
@@ -64,46 +113,55 @@ export default function Results() {
     return () => ws.close()
   }, [domain, source, navigate])
 
-  if (loading) return <p>Scanning {domain}...</p>
-
   return (
     <div style={{ padding: '1rem' }}>
-      <h2>Scan Summary</h2>
-      <p><strong>Domain:</strong> {domain}</p>
-      <p><strong>TheHarvester source:</strong> {source}</p>
-      <p><strong>Started:</strong> {startTime}</p>
-        {toolsCompleted === 2 && (
-        <p><strong>Finished:</strong> {endTime}</p>
+      <div className="scan-summary-container">
+        <h2>Scan Summary</h2>
+        <p><strong>Domain:</strong> {domain}</p>
+        <p><strong>TheHarvester source:</strong> {source}</p>
+        <p><strong>Started:</strong> {startTime}</p>
+        {endTime && <p><strong>Finished:</strong> {endTime}</p>}
+
+        {combined && (
+          <>
+            <p>
+              <strong>Summary:</strong> {combined.subdomains?.length || 0} subdomains,
+              {combined.ips?.length || 0} IPs,
+              {combined.emails?.length || 0} emails,
+              {combined.social_profiles?.length || 0} social_profiles
+            </p>
+            <div className="centered-buttons">
+              <button onClick={() => setShowModal(true)}>View Details</button>
+              <button onClick={exportToExcel}>
+                Export to Excel
+              </button>
+            </div>
+          </>
         )}
-
-
-      {combined && (
-        <>
-          <p>
-            <strong>Summary:</strong> {combined.subdomains?.length || 0} subdomains, {combined.ips?.length || 0} IPs, {combined.emails?.length || 0} emails, {combined.social_profiles?.length || 0} social_profiles
-          </p>
-          <button onClick={() => setShowModal(true)}>View Details</button>
-          <button onClick={exportToExcel}>
-            Export to Excel
-            </button>
-
-
-        </>
-      )}
+      </div>
 
       <h3 className='tool_response'>Tool Responses</h3>
-      {updates.map((u, i) => (
-        <div key={i} className="tool-background">
-          <h4>{u.source}</h4>
-          <pre className='results'>
-            {JSON.stringify(u.result, null, 2)}
-          </pre>
-          <p><strong>Duration:</strong> {u.duration}s</p>
-        </div>
-      ))}
+      {Object.entries(tools).map(([tool, data], i) => {
+        const duration = data.started ? Math.floor(((data.ended || new Date()) - new Date(data.started)) / 1000) : 0
+        return (
+          <div
+            key={i}
+            className="tool-background"
+          >
+            <h4>{tool}</h4>
+            {data.result ? (
+              <pre className='results' >
+                {JSON.stringify(data.result, null, 2)}
+              </pre>
+            ) : (
+              <p><em>Waiting for results...</em></p>
+            )}
+            <p><strong>Duration:</strong> {duration}s</p>
+          </div>
+        )
+      })}
 
-      <button onClick={() => navigate('/')}>Back</button>
-      
+      <button onClick={() => navigate('/')} style={{ marginTop: '2rem' }}>Back</button>
 
       {showModal && combined && (
         <div className='full_details_background'>
@@ -120,9 +178,9 @@ export default function Results() {
             <ul>{combined.emails?.map((email, i) => <li key={i}>{email}</li>)}</ul>
 
             <h4>social_profiles</h4>
-             <ul>{combined.social_profiles?.map((social_profiles, i) => <li key={i}>{social_profiles}</li>)}</ul>
+            <ul>{combined.social_profiles?.map((social, i) => <li key={i}>{social}</li>)}</ul>
 
-            <button onClick={() => setShowModal(false)}>Close</button>
+            <button onClick={() => setShowModal(false)} style={{ marginTop: "1rem" }}>Close</button>
           </div>
         </div>
       )}

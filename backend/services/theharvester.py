@@ -6,7 +6,6 @@ def run_theHarvester_sync(domain: str, source: str) -> dict:
     process = subprocess.run(
         ["poetry", "run", "python", "theHarvester.py", "-d", domain, "-b", source],
         cwd="C:/Users/omerl/theHarvester",
-        shell=True,
         stdout=PIPE,
         stderr=PIPE
     )
@@ -19,7 +18,7 @@ def run_theHarvester_sync(domain: str, source: str) -> dict:
 
     lines = stdout.decode(errors="ignore").splitlines()
 
-    # הפלט הרצוי
+
     results = {
         "subdomains": [],
         "ips": [],
@@ -31,11 +30,10 @@ def run_theHarvester_sync(domain: str, source: str) -> dict:
     for line in lines:
         line = line.strip()
 
-        # דילוג על שורות ריקות או עם תווים לא משמעותיים
         if not line or set(line) <= {"-", "="}:
             continue
 
-        # קביעת הקטגוריה הנוכחית
+
         if line.startswith("[*] Hosts found:"):
             current_section = "subdomains"
         elif line.startswith("[*] IPs found:"):
