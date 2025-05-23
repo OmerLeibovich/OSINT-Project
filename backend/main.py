@@ -14,7 +14,12 @@ init_db()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+       allow_origins=[
+        "http://localhost:3000",        
+        "http://frontend:3000",          
+        "http://host.docker.internal:3000",
+        "http://backend:5000",
+    ],
     allow_methods=["*"],
     allow_headers=["*"]
 )
@@ -30,7 +35,7 @@ class ScanRequest(BaseModel):
 def dedup_list(data):
     return list(dict.fromkeys(x.strip() for x in data if x and x.strip()))
 
-@app.websocket("/scan/stream")
+@app.websocket("/scan")
 async def scan_websocket(websocket: WebSocket):
     await websocket.accept()
     data = await websocket.receive_json()

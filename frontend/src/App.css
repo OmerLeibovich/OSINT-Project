@@ -45,6 +45,12 @@ input[type="text"]:focus {
   box-shadow: 0 0 6px #61dafb88;
 }
 
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .Button {
   width: 70%;
   padding: 12px 24px;
@@ -65,15 +71,38 @@ input[type="text"]:focus {
   background-color: #21a1f1;
   transform: scale(1.05);
 }
-
+.main_title{
+  color: white;
+  font-weight: bold;
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
 .select_Button {
   margin-bottom: 1rem;
   width: 30%;
   padding: 0.5rem;
 }
+.source_title{
+  color: white;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+.view_Button{
+  margin-right: 0.5rem;
+  color :green 
+}
 
+.summery_item{
+ flex: 1;
+ min-width: 200px
+}
 
-
+.summery_background{
+  display: flex;
+  gap: '2rem';
+  flex-wrap: 'wrap' ;
+}
 
 .spinner-container {
   display: flex;
@@ -192,12 +221,11 @@ input[type="text"]:focus {
 }
 
 .modal-content {
-  background: white;
+  position: relative;
   padding: 2rem;
+  background: white;
   border-radius: 8px;
-  width: 90vw;
-  max-width: 900px;
-  max-height: 90vh;
+  max-height: 80vh;
   overflow-y: auto;
 }
 @media (max-width: 600px) {

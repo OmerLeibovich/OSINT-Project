@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import * as XLSX from 'xlsx';
+import { connectToScanWebSocket, ReactAPI } from "../api";
+
+
 
 export default function Results() {
   const [searchParams] = useSearchParams()
   const domain = searchParams.get('domain')
-  const source = searchParams.get('source') || 'bing'
+  const source = searchParams.get('source')
   const [tools, setTools] = useState({
     theHarvester: { started: new Date(), result: null, ended: null },
     amass: { started: new Date(), result: null, ended: null }
@@ -52,66 +55,41 @@ export default function Results() {
   const startStr = start.toLocaleString()
   setStartTime(startStr)
 
-  const ws = new WebSocket("ws://127.0.0.1:8000/scan/stream")
+  const ws = connectToScanWebSocket(domain, source, (msg) => {
+  const now = new Date();
 
-  ws.onopen = () => {
-    ws.send(JSON.stringify({ domain, source }))
-  }
-
-  ws.onmessage = async (event) => {
-    const msg = JSON.parse(event.data)
-    const now = new Date()
-
-    setTools(prev => {
-      const updated = {
-        ...prev,
-        [msg.source]: {
-          ...prev[msg.source],
-          result: msg.result,
-          ended: now
-        }
+  setTools(prev => {
+    const updated = {
+      ...prev,
+      [msg.source]: {
+        ...prev[msg.source],
+        result: msg.result,
+        ended: now
       }
+    };
 
-      const finished = Object.values(updated).filter(t => t.result).length
-      if (finished === 2) {
-        const endStr = now.toLocaleString()
-        setEndTime(endStr)
-        saveScanResult(domain, source, startStr, endStr, msg.combined)
-      }
-
-      return updated
-    })
-
-    setCombined(msg.combined)
-  }    
-   async function saveScanResult(domain, source, startTime, endTime, combined) {
-        try {
-            await fetch("http://127.0.0.1:8000/save", {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                domain,
-                source,
-                start_time: startTime,
-                end_time: endTime,
-                result: combined
-            })
-            })
-        } catch (err) {
-            console.error("Failed to save scan result:", err)
-        }
-        }
-
-
-
-    ws.onerror = (err) => {
-      console.error("WebSocket error:", err)
+    const finished = Object.values(updated).filter(t => t.result).length;
+    if (finished === 2) {
+      const endStr = now.toLocaleString();
+      setEndTime(endStr);
+      ReactAPI.saveScan({
+        domain,
+        source,
+        start_time: startStr,
+        end_time: endStr,
+        result: msg.combined
+      });
     }
 
+    return updated;
+  });
+
+  setCombined(msg.combined);
+});
+   
+
     return () => ws.close()
-  }, [domain, source, navigate])
+  }, [])
 
   return (
     <div style={{ padding: '1rem' }}>

@@ -1,0 +1,3 @@
+[submodule "backend/services/theharvester"]
+	path = backend/services/theharvester
+	url = https://github.com/laramies/theHarvester.git
