@@ -15,7 +15,7 @@ This is a full-stack OSINT (Open Source Intelligence) web application that perfo
 ## Quick Start (3 Commands)
 ```bash
 # 1. Clone the repository
-git clone https://github.com/OmerLeibovich/OSINT-Project.git && cd OSINT-Project
+git clone --recurse-submodules https://github.com/OmerLeibovich/OSINT-Project.git && cd OSINT-Project
 
 # 2. Build the Docker images
 docker compose build
@@ -32,8 +32,6 @@ To run integration tests for the FastAPI backend, use:
 # From the root of the project
 cd backend
 pytest tests/
-
-
 Then open your browser at: [http://localhost:3000](http://localhost:3000)
 
 ## Folder Structure
