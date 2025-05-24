@@ -1,8 +1,26 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {ReactAPI } from "../api";
+import { v4 as uuidv4 } from 'uuid';
+
+
+// Home component – entry point for initiating OSINT scans.
+//  Functionality:
+//  - Lets the user enter a domain and select aHarvester source.
+//  - Validates the domain and redirects to the /results page with query parameters.
+//  - Fetches and displays scan history from the backend.
+//  - Generates a unique scan_id (UUID) on the client side for traceability.
+//  - Allows viewing and deleting past scans.
+//  Used hooks:
+//  - useState for managing domain input, history, modal state, etc.
+//  - useEffect to fetch history on mount and handle screen resize.
+//  Notable features:
+//  - Responsive behavior for mobile (toggle scan history display).
+//  - Structured console logs for actions (scan started, validation failed, etc.).
+
 
 export default function Home() {
+  // State hooks
   const [domain, setDomain] = useState('')
   const [source, setSource] = useState('bing')
   const [history, setHistory] = useState([])
@@ -10,13 +28,18 @@ export default function Home() {
   const [showHistory, setShowHistory] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 600)
   const [modalOpen, setModalOpen] = useState(false)
-  const navigate = useNavigate()
+  const [scanId] = useState(uuidv4()); // Unique scan ID for tracking
 
+  const navigate = useNavigate()
+  // Supported sources for theHarvester
   const sources = [
     'bing', 'baidu', 'brave', 'duckduckgo', 'crtsh', 'hackertarget',
     'otx', 'rapiddns', 'subdomainfinderc99', 'threatminer', 'urlscan'
   ]
 
+  //  Attempts to extract a clean domain from user input.
+  //  @param {string} input - raw user input (may include protocol or www.)
+  //  @returns {string|null} - cleaned domain or null if invalid
   const extractDomain = (input) => {
   try {
     const url = new URL(input.startsWith("http") ? input : `https://${input}`);
@@ -27,7 +50,7 @@ export default function Home() {
   }
 };
 
-
+  // Fetch scan history on first load, and handle screen resize for mobile toggle.
   useEffect(() => {
     ReactAPI.getHistory()
   .then(data => {
@@ -43,23 +66,51 @@ export default function Home() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+
+  // Triggered when user clicks "Check Domain".
+  //  Validates domain format and navigates to /results with query params.
+  //  Also logs scan start event with structured console log.
  const onSearch = () => {
-  if (!domain) return;
+  try {
+    if (!domain) return;
 
-  const cleanedDomain = extractDomain(domain);
-  const domainPattern = /^(?!-)(?:[a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,}$/;
+    const cleanedDomain = extractDomain(domain);
+    const domainPattern = /^(?!-)(?:[a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,}$/;
 
+    if (!cleanedDomain || !domainPattern.test(cleanedDomain)) {
+      alert("Please enter a valid domain.");
+      console.error(JSON.stringify({
+        event: "invalid_domain",
+        scan_id: scanId,
+        domain: domain,
+        timestamp: new Date().toISOString()
+      }));
+      return;
+    }
 
+    console.log(JSON.stringify({
+      event: "scan_initiated",
+      scan_id: scanId,
+      domain: cleanedDomain,
+      source,
+      timestamp: new Date().toISOString()
+    }));
 
-  if (!cleanedDomain || !domainPattern.test(cleanedDomain)) {
-    alert("Please enter a valid domain.");
-    return;
+    navigate(`/results?domain=${encodeURIComponent(cleanedDomain)}&source=${encodeURIComponent(source)}&scan_id=${scanId}`);
+  } catch (err) {
+    console.error(JSON.stringify({
+      event: "scan_initiation_failed",
+      scan_id: scanId,
+      error: err.message,
+      timestamp: new Date().toISOString()
+    }));
+    alert("Something went wrong. Please try again.");
   }
-
-  navigate(`/results?domain=${encodeURIComponent(cleanedDomain)}&source=${encodeURIComponent(source)}`);
 };
 
 
+
+// Deletes a scan entry by ID and removes it from the local history state.
 const deleteEntry = async (id) => {
   const res = await ReactAPI.deleteScan(id);
   if (!res.error) {
@@ -71,17 +122,20 @@ const deleteEntry = async (id) => {
 
  return (
   <div className="home-container">
+  {/* Search section with input + source selector */}
     <div className="search-box">
       <header className="App-header">
        <h2 className='main_title'>
         OSINT Domain Scanner
       </h2>
+        {/* Domain input field */}
         <input
           type="text"
           value={domain}
           onChange={e => setDomain(e.target.value.trim())}
           placeholder="Enter a domain (e.g. google.com)"
         />
+        {/* Source selection for theHarvester */}
         <span className='source_title'>
           Select a source for theHarvester:
         </span>
@@ -94,8 +148,9 @@ const deleteEntry = async (id) => {
             <option key={src} value={src}>{src}</option>
           ))}
         </select>
-
+          {/* Trigger scan */}
         <button className="Button" onClick={onSearch}>Check Domain</button>
+        {/* Toggle history (for mobile view) */}
         {isMobile && (
         <button
             className="Button"
@@ -110,10 +165,11 @@ const deleteEntry = async (id) => {
         )}
       </header>
     </div>
-
+     {/* History section – shows previous scan records */}
     {showHistory || window.innerWidth > 600 ? (
   <div className="history-box">
     <h3 style={{ marginTop: 0 }}>Scan History</h3>
+    {/* No history case */}
     {Array.isArray(history) && history.length === 0 ? (
       <p>No scan history found.</p>
     ) : Array.isArray(history) ? (
@@ -134,7 +190,7 @@ const deleteEntry = async (id) => {
   </div>
 ) : null}
 
-
+    {/* Modal for viewing full scan details */}
     {modalOpen && selectedEntry && (
       <div className="modal-overlay">
         <div className="modal-content">
@@ -146,6 +202,7 @@ const deleteEntry = async (id) => {
           <p><strong>Start:</strong> {selectedEntry.start_time}</p>
           <p><strong>End:</strong>  {selectedEntry.end_time}</p>
 
+          {/* Detailed data blocks */}
           <div className='summery_background'>
             {selectedEntry.subdomains?.length > 0 && (
               <div className='summery_item'>

@@ -4,3 +4,7 @@ pydantic
 python-multipart
 aiofiles
 starlette
+pytest
+httpx
+websockets
+pytest-asyncio
