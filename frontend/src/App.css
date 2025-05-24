@@ -191,14 +191,14 @@ input[type="text"]:focus {
 
 .search-box {
   flex: 1;
-  margin-top: 200px;
+  margin-top: 50px;
   min-width: 300px;
   max-width: 600px;
 }
 
 .history-box {
   flex: 1;
-  margin-top: 220px;
+  margin-top: 50px;
   min-width: 300px;
   max-width: 300px;
   background: white;
