@@ -1,4 +1,3 @@
-# OSINT-Project
 # OSINT Domain Scanner
 
 ## Overview
@@ -30,8 +29,11 @@ docker compose up
 To run integration tests for the FastAPI backend, use:
 
 # From the root of the project
+```bash
 cd backend
+
 pytest tests/
+```
 Then open your browser at: [http://localhost:3000](http://localhost:3000)
 
 ## Folder Structure
