@@ -22,7 +22,7 @@ docker compose build
 # 3. Launch the stack
 docker compose up
 ```
-
+Then open your browser at: [http://localhost:3000](http://localhost:3000)
 
 ##  Running Tests
 
@@ -34,7 +34,6 @@ cd backend
 
 pytest tests/
 ```
-Then open your browser at: [http://localhost:3000](http://localhost:3000)
 
 ## Folder Structure
 ```
