@@ -79,30 +79,40 @@ input[type="text"]:focus {
   text-align: center;
 }
 .select_Button {
-  margin-bottom: 1rem;
-  width: 30%;
-  padding: 0.5rem;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
-.source_title{
+.source_title {
   color: white;
-  font-weight: bold;
-  font-size: 1.2rem;
+  display: block;
+  text-align: center;
+  width: 100%;
 }
+
 .view_Button{
   margin-right: 0.5rem;
   color :green 
 }
 
-.summery_item{
- flex: 1;
- min-width: 200px
+.summery_background {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  justify-content: space-between;
 }
 
-.summery_background{
-  display: flex;
-  gap: '2rem';
-  flex-wrap: 'wrap' ;
+.summery_item {
+  flex: 1 1 45%;
+  background: #f5f5f5;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-width: 250px;
 }
+
 
 .spinner-container {
   display: flex;

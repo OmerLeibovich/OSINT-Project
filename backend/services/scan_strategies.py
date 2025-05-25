@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from services.amass import run_amass
 from services.theharvester import run_theHarvester
+from services.subfinder import run_subfinder
 
 
 # This module defines the strategy interface and concrete implementations for OSINT scanning tools.
@@ -31,3 +32,7 @@ class AmassScanner(ScannerStrategy):
 class TheHarvesterScanner(ScannerStrategy):
     async def scan(self, domain: str, source: str = None) -> dict:
         return await run_theHarvester(domain, source)
+    
+class SubfinderScanner(ScannerStrategy):
+    async def scan(self, domain: str, source: str = None) -> dict:
+        return await run_subfinder(domain)

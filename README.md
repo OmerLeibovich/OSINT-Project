@@ -5,7 +5,7 @@ This is a full-stack OSINT (Open Source Intelligence) web application that perfo
 
 ### Features
 -  Real-time domain scanning using WebSockets
--  Concurrent scanning via Amass & theHarvester
+-  Concurrent execution of Amass, theHarvester, and Subfinder
 -  Result aggregation, deduplication (subdomains, IPs, emails, social profiles)
 -  Export scan results to Excel (XLSX)
 -  Persistent scan history with timestamp & source
@@ -39,33 +39,34 @@ Then open your browser at: [http://localhost:3000](http://localhost:3000)
 ## Folder Structure
 ```
 OSINT-Project/
-├── backend/                  # FastAPI backend
-│   ├── services/             # Scan service + tool strategies
+├── backend/                  
+│   ├── services/             # Scanning tool strategies
 │   │   ├── amass.py
 │   │   ├── theharvester.py
+│   │   ├── subfinder.py     
 │   │   ├── scan_service.py
 │   │   └── scan_strategies.py
-│   ├── storage/              # SQLite DB logic
+│   ├── storage/              # SQLite logic
 │   │   └── sqlite.py
-│   ├── tests/                # Pytest tests
+│   ├── tests/                # Pytest-based backend tests
 │   │   ├── test_api.py
 │   │   └── test_websocket.py
-│   ├── main.py               # API entrypoint
+│   ├── main.py               # FastAPI app entry
 │   ├── Dockerfile
 │   └── requirements.txt
 │
-├── frontend/                 # React frontend
+├── frontend/                 
 │   ├── src/
 │   │   ├── pages/            # Home.js, Results.js
-│   │   ├── api.js           # WebSocket + API bridge
+│   │   ├── api.js           # API + WebSocket client
 │   │   └── config.js
 │   ├── Dockerfile
 │   ├── package.json
 │   └── .env
 │
-├── docker-compose.yml       # Root Docker Compose
-├── .env                      # Shared env vars
-└── README.md                # You are here
+├── docker-compose.yml
+├── .env
+└── README.md
 ```
 
 ## Requirements

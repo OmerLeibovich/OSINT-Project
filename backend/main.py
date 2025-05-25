@@ -4,7 +4,7 @@ from starlette.websockets import WebSocketDisconnect
 from pydantic import BaseModel
 from storage.sqlite import init_db, save_scan_to_db, get_scan_history, delete_scan_by_id
 from services.scan_service import ScanService
-from services.scan_strategies import AmassScanner, TheHarvesterScanner
+from services.scan_strategies import AmassScanner, TheHarvesterScanner, SubfinderScanner
 import time
 import uuid
 import logging
@@ -36,7 +36,8 @@ app.add_middleware(
 # Factory + Strategy Design Patterns
 scan_service = ScanService({
     "amass": AmassScanner(),
-    "theHarvester": TheHarvesterScanner()
+    "theHarvester": TheHarvesterScanner(),
+    "subfinder": SubfinderScanner()
 })
 
 class ScanRequest(BaseModel):

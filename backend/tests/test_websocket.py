@@ -28,15 +28,18 @@ async def test_websocket_scan():
 
        
         responses = []
-        for _ in range(2):  
+        for _ in range(3):  
             message = await websocket.recv()
             data = json.loads(message)
             responses.append(data)
 
         assert any(r["source"] == "amass" for r in responses)
         assert any(r["source"] == "theHarvester" for r in responses)
+        assert any(r["source"] == "subfinder" for r in responses)
 
         for r in responses:
             assert "combined" in r
             assert isinstance(r["combined"]["subdomains"], list)
             assert isinstance(r["combined"]["ips"], list)
+            assert isinstance(r["combined"]["emails"], list)
+            assert isinstance(r["combined"]["social_profiles"], list)

@@ -2,64 +2,79 @@
 
 ### Additional Production-Grade Tests I Would Implement
 
-1. **Input Validation Tests:**
-   - Ensure the backend properly rejects malformed domains (e.g., no TLD, invalid characters).
-   - Validate that missing or extra JSON keys in POST /save return appropriate error responses.
+1. Input Validation Tests:
+   - Ensure the backend rejects malformed or malicious domains (e.g., `http://`, missing TLDs).
+   - Validate missing/invalid keys in POST `/save` return 422 or meaningful errors.
 
-2. **WebSocket Error Handling:**
-   - Simulate dropped connections or malformed WebSocket messages.
-   - Ensure system recovers gracefully and logs errors.
+2. WebSocket Robustness Tests:
+   - Simulate dropped WebSocket connections mid-scan.
+   - Send malformed or incomplete messages and assert proper logging and stability.
 
-3. **Concurrency Stress Tests:**
-   - Simulate multiple concurrent scans to check for race conditions or bottlenecks.
-   - Ensure DB writes don't conflict or corrupt.
+3. Concurrency & Race Condition Tests:
+   - Trigger parallel scans with same domain but different sources to ensure thread safety.
+   - Check SQLite commit consistency and scan ID isolation under load.
 
-4. **Frontend Integration Tests:**
-   - Ensure correct rendering and updating of real-time scan data.
-   - Simulate user flows including Excel export, modal views, and history interactions.
+4. Subfinder-Specific Test:
+   - Verify that Subfinder returns proper subdomain format.
+   - Validate deduplication logic when overlapping data comes from multiple tools.
 
-5. **Security Tests:**
-   - Prevent injection attacks in domain field.
-   - Ensure WebSocket connections validate expected structure.
+5. UI Integration Tests:
+   - Ensure live result updates from all 3 tools are shown progressively.
+   - Test the modal window and Excel export flows for completeness.
+
+6. Security-Focused Tests:
+   - Sanitize all input before using in subprocesses (already safe by avoiding shell=True).
+   - Validate that no tool result can inject code into frontend or DB.
 
 ---
 
 ### How I Would Benchmark & Optimise Performance
 
-- **Tool Runtime Logging:**
-  - Log start and end time of each tool separately (already partially done).
-  - Profile average scan time per tool and source (e.g., bing vs crtsh).
+- Timing Each Tool:
+  - Track and log tool runtime independently (`start`, `end`, `duration`) with structured logs.
+  - Analyze median and P95 execution time per tool (e.g., Subfinder typically fastest).
 
-- **Async Parallel Execution:**
-  - Already using `asyncio` + `to_thread()` — would validate the thread pool isn’t limiting throughput.
-  - Consider using `async subprocess` for Amass and `theHarvester` for better performance isolation.
+- Concurrency Improvements:
+  - Explore `asyncio.create_subprocess_exec()` instead of `to_thread()` where possible (especially for Amass).
+  - Parallelize file I/O and DB commits if needed (currently non-blocking via FastAPI).
 
-- **Frontend Optimization:**
-  - Lazy load history data on scroll or filter.
-  - Reduce WebSocket overhead with message batching if needed.
+- React UI Enhancements:
+  - Consider debounce or loading skeletons for smoother UX during scans.
+  - Load history only when modal is opened (lazy load).
 
-- **Database Indexing:**
-  - Index domain + timestamp columns in SQLite for faster history lookups and deletions.
+- Database Optimization:
+  - Add indexes on `domain`, `start_time`, and `scan_id` in SQLite.
+  - Consider moving to PostgreSQL for large-scale or concurrent users.
 
 ---
 
 ### Known Bottlenecks & Mitigations
 
-1. **Amass Tool:**
-   - **Issue:** Amass takes a long time depending on network conditions and DNS resolution.
-   - **Mitigation:** Use `-passive` and `-norecursive` flags (already applied).
-   - **Further Step:** Cache or limit sources in production; allow source toggling.
+#### 1. Amass
+   - Bottleneck: Long runtime (up to 30s+) due to DNS enumeration.
+   - Mitigation: Use passive mode only (`-passive`), skip brute-force in MVP.
 
-2. **theHarvester:**
-   - **Issue:** Some sources hang or timeout.
-   - **Mitigation:** Timeout handling and parsing cleanup logic.
-   - **Further Step:** Add timeouts at the subprocess level and improve section parsing logic.
+#### 2. theHarvester
+   - Bottleneck: Inconsistent output parsing and hangs on some sources.
+   - Mitigation: Parse only JSON-safe results and use strict timeout in subprocess.
 
-3. **WebSocket Lifecycle:**
-   - **Issue:** WebSocket errors are tricky to debug (e.g., partial data).
-   - **Mitigation:** Add heartbeats and error acknowledgment messages.
+#### 3. Subfinder
+   - Bottleneck: Quick, but no IP/email/profile info.
+   - Mitigation: Useful for coverage – results are merged but clearly flagged.
+
+#### 4. WebSocket Fragility
+   - Bottleneck: If client disconnects, backend needs to handle cleanup.
+   - Mitigation: Use `try/except WebSocketDisconnect` and structured error logs.
 
 ---
 
-Overall, the project supports testability and real-time scanning well.
-Further improvements would focus on robustness and long-term scalability (e.g., Postgres, queue system, retries)
+### Summary
+
+The system is scalable, modular, and already includes design patterns (Strategy + Factory).  
+Adding Subfinder improves discovery coverage with minimal overhead.
+
+For production, I would prioritize:
+- Switching to PostgreSQL
+- Adding distributed queue support (e.g., Celery or background workers)
+- Centralized logging (e.g., with ELK or Loki)
+

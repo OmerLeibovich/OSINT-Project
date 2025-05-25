@@ -19,9 +19,10 @@ export default function Results() {
   const source = searchParams.get('source')
   const scan_id = searchParams.get('scan_id')
   const [tools, setTools] = useState({
-    theHarvester: { started: new Date(), result: null, ended: null },
-    amass: { started: new Date(), result: null, ended: null }
-  })
+  amass: { started: new Date(), result: null, ended: null },
+  theHarvester: { started: new Date(), result: null, ended: null },
+  subfinder: { started: new Date(), result: null, ended: null }
+});
   const [combined, setCombined] = useState(null)
   const [startTime, setStartTime] = useState(null)
   const [endTime, setEndTime] = useState(null)
@@ -104,8 +105,9 @@ export default function Results() {
       }
     };
 
+    const totalTools = Object.keys(tools).length;
     const finished = Object.values(updated).filter(t => t.result).length;
-    if (finished === 2) {
+    if (finished === totalTools) {
       const endStr = now.toLocaleString();
       setEndTime(endStr);
 
